@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-. /etc/profile.d/python3.bash
+# . /etc/profile.d/python3.bash
 virtualenv -p python3 MediaManagerEnv
 source MediaManagerEnv/bin/activate
 pip install flask

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-. /etc/profile.d/python3.bash
+# . /etc/profile.d/python3.bash
 python3 - $@ <<PYTHON
 # -*- coding: utf-8 -*-
 import re

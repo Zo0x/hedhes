@@ -1,4 +1,5 @@
 #!MediaManagerEnv/bin/python
+import sys
 from app import app, models
 
 # Initialise the default settings
@@ -10,4 +11,4 @@ for setting in app.config.get('DEFAULT_SETTINGS'):
             s.__dict__[key] = setting[key]
         s.save()
 
-app.run(debug=True, port=5000)
+app.run(debug=True, port=sys.argv[1] if len(sys.argv) > 1 else 5000)

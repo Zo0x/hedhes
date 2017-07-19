@@ -1,0 +1,7 @@
+<form action="/search" method="post" name="search" class="search">
+  {{ search_form.hidden_tag() }}
+  {{ search_form.query(size=80, placeholder='Search...', class='form-control') }}
+  <button type="submit" class="search btn">
+    <span class="ico glyphicon glyphicon-search" aria-hidden="true"></span>
+  </button>
+</form>

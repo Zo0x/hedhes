@@ -1,0 +1,59 @@
+{% extends "index.html" %}
+{% block content %}
+<div class="movies">
+    <h6>Recently Added Movies</h6>
+    {%- if recent_movies|length > 0 %}
+    <ul class="media-list">
+        {% for media in recent_movies %}
+        <li class="media">
+            <div class="media-left">
+                <a href="/movies/{{ media.tmdb_id }}">
+                    <img class="media-object" alt="{{ media.title }}" src="{{ media.get_small_poster_url }}">
+                </a>
+            </div>
+            <div class="media-body">
+                {% include 'widgets/rating.html' %}
+                <span class="year">{{ media.release_date.strftime("%B %Y") }}</span>
+                <h4 class="media-heading">
+                    <a href="/movies/{{ media.tmdb_id }}">{{ media.title }}</a>
+                </h4>
+                <p class="description">{{ media.description }}</p>
+                <span class="genre">{{ media.genres }}</span>
+            </div>
+        </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p>No movies have been added in the last 30 days</p>
+    {% endif %}
+</div>
+<hr>
+<div class="tv">
+    <h6>Recently Added TV</h6>
+    {%- if recent_tv|length > 0 %}
+    <ul class="media-list">
+        {% for media in recent_tv %}
+        <li class="media">
+            <div class="media-left">
+                <a href="/tv/{{ media.tmdb_id }}">
+                    <img class="media-object" alt="{{ media.title }}" src="{{ media.get_small_poster_url }}">
+                </a>
+            </div>
+            <div class="media-body">
+                {% include 'widgets/rating.html' %}
+                <span class="year">{{ media.first_air_date.strftime("%B %Y") }} - {%- if not media.in_production %} {{ media.last_air_date.strftime("%B %Y") }}{% else %} Present{% endif %}</span>
+                <h4 class="media-heading">
+                    <a href="/tv/{{ media.tmdb_id }}">{{ media.title }}</a>
+                    <span>{{ media.episode_count }}/{{ media.available_episodes }} episodes</span>
+                </h4>
+                <p class="description">{{ media.description }}</p>
+                <span class="genre">{{ media.genres }}</span>
+            </div>
+        </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p>No TV shows have been added in the last 30 days</p>
+    {% endif %}
+</div>
+{% endblock %}

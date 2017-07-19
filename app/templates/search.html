@@ -1,0 +1,62 @@
+{% extends "index.html" %}
+
+{% block content %}
+<div class="tabs">
+    <h6 class="movies active" data-tab="movies">Movies ({{ movies|length }})</h6>
+    <h6 class="tv" data-tab="tv">TV ({{ tv|length }})</h6>
+</div>
+<div class="tabs-content">
+    <div class="movies tab active">
+        {% if movies|length == 0 %}
+        <h2>No search results found</h2>
+        {% else %}
+        <ul class="media-list">
+        {% for media in movies %}
+        <li class="media">
+                <div class="media-left">
+                    <a href="/movies/{{ media.tmdb_id }}">
+                        <img class="media-object" alt="{{ media.title }}" src="{{ media.get_small_poster_url }}">
+                    </a>
+                </div>
+                <div class="media-body">
+                    {% include 'widgets/rating.html' %}
+                    <span class="year">{{ media.release_date.year }}</span>
+                    <h4 class="media-heading">
+                        <a href="/movies/{{ media.tmdb_id }}">{{ media.title }}</a>
+                    </h4>
+                    <p class="description">{{ media.description }}</p>
+                    <span class="genre">{{ media.genre }}</span>
+                </div>
+            </li>
+        {% endfor %}
+        </ul>
+        {% endif %}
+    </div>
+    <div class="tv tab">
+        {% if tv|length == 0 %}
+        <h2>No search results found</h2>
+        {% else %}
+        <ul class="media-list">
+        {% for media in tv %}
+        <li class="media">
+                <div class="media-left">
+                    <a href="/tv/{{ media.tmdb_id }}">
+                        <img class="media-object" alt="{{ media.title }}" src="{{ media.get_small_poster_url }}">
+                    </a>
+                </div>
+                <div class="media-body">
+                    {% include 'widgets/rating.html' %}
+                    <span class="year">{{ media.first_air_date.year }}</span>
+                    <h4 class="media-heading">
+                        <a href="/tv/{{ media.tmdb_id }}">{{ media.title }}</a>
+                    </h4>
+                    <p class="description">{{ media.description }}</p>
+                    <span class="genre">{{ media.genre }}</span>
+                </div>
+            </li>
+        {% endfor %}
+        </ul>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

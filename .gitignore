@@ -99,3 +99,9 @@ ENV/
 
 # mypy
 .mypy_cache/
+
+# custom
+MediaManagerEnv/
+db_repository/
+app.db
+

@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block container %}
+    <h6 class="head-name">Hedhes Media Manager</h6>
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+    {% for message in messages %}
+    <div class="flash-message" role="alert">{{ message }}</div>
+    {% endfor %}
+    {% endif %}
+    {% endwith %}
+    <div class="clearfix">
+        <div class="head">
+            <h2 class="main">{{ heading }}</h2>
+        </div>
+    </div>
+    <hr class="top">
+    {% block content %}{% endblock %}
+{% endblock %}

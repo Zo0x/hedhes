@@ -1,0 +1,167 @@
+{% extends "index.html" %}
+
+{% block content %}
+<div class="tv media view" data-tmdbid="{{ media.tmdb_id }}" data-media-type="tv">
+    <div class="media-actions">
+        <button class="icon imdb active" data-tooltip="toggle" data-placement="auto top" title="Go to IMDb page" onclick="window.open('{{ imdb_link }}', '_blank');">
+            <span class="glyphicon glyphicon-film" aria-hidden="true"></span>
+        </button>
+        <button class="icon unwatch {% if media.in_library and media.watching %} active{% endif %}" data-swap="watch" data-tooltip="toggle" data-placement="auto top" title="Watching for downloads">
+            <span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span>
+        </button>
+        <button class="icon watch {% if media.in_library and not media.watching %} active{% endif %}" data-swap="unwatch" data-tooltip="toggle" data-placement="auto top" title="Not currently watching">
+            <span class="glyphicon glyphicon-eye-close" aria-hidden="true"></span>
+        </button>
+        <button class="icon search {% if media.in_library %} active{% endif %}" data-tooltip="toggle" data-placement="auto top" title="Perform manual search">
+            <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
+        </button>
+        <button class="icon notify {% if media.has_files %} active{% endif %}" data-tooltip="toggle" data-placement="auto top" title="Media available">
+            <span class="glyphicon glyphicon-tint" aria-hidden="true"></span>
+        </button>
+        <button class="icon refresh notify {% if media.in_library %} active{% endif %}" data-tooltip="toggle" data-placement="auto top" title="Refresh library item" data-alt-title="Refreshing local library">
+            <span class="glyphicon glyphicon-refresh" aria-hidden="true"></span>
+        </button>
+        <button class="icon add {% if not media.in_library %} active{% endif %}" data-tooltip="toggle" data-placement="auto top" title="Add to library">
+            <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
+        </button>
+        <button class="icon remove {% if media.in_library %} active{% endif %}" data-tooltip="toggle" data-placement="auto top" title="Remove from library" data-toggle="modal" data-target="#confirm-delete">
+            <span class="glyphicon glyphicon-trash" aria-hidden="true"></span>
+        </button>
+        <button class="icon settings {% if media.in_library %} active{% endif %}" data-tooltip="toggle" data-placement="auto top" title="Media Settings">
+            <span class="glyphicon glyphicon-cog" aria-hidden="true"></span>
+        </button>
+    </div>
+    <div class="modal fade" id="confirm-delete" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h6>Remove item from library</h6>
+                </div>
+                <div class="modal-body">
+                    You are about to remove "<span class="title">{{ media.title }}</span>" from your library,
+                    all data stored about this library item will be permanently deleted.
+                    <br/><br/>
+                    <strong>Please Note:</strong>
+                    Your media files will not be deleted, only the stored metadata will.
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                    <a class="btn btn-danger btn-ok">Remove Library Item</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="media-settings">
+        <div class="slider">
+            <h6>Settings for {{ media.title }}</h6>
+            <div class="inner">
+                <form action="/movies/save/{{ media.tmdb_id }}" method="post" name="settings" class="settings form-horizontal">
+                    {{ settings_form.hidden_tag() }}
+                    <div class="form-group">
+                        <label for="quality" class="col-sm-2 control-label">Search Quality</label>
+                        {{ settings_form.quality(size=12, class='col-sm-10 form-control') }}
+                    </div>
+                    <div class="form-group file-paths">
+                        <label for="file_paths" class="col-sm-2 control-label">Available Files</label>
+                        <div class="col-sm-10" style="padding-left: 0;">
+                            {% with media_files = media.files.all() %}
+                            {% if media_files|length > 0 %}
+                            <ul class="list-group">
+                            {% for media_file in media_files %}
+                                <li class="form-control-static list-group-item">{{ media_file.path }}</li>
+                            {% endfor %}
+                            </ul>
+                            {% else %}
+                            <p class="form-control">No files found for this library item, please try refreshing the item</p>
+                            {% endif %}
+                            {% endwith %}
+                        </div>
+                    </div>
+                    <div class="actions">
+                        <button type="submit" class="save btn" data-tooltip="toggle" data-placement="auto bottom"
+                                title="Save Settings">
+                            <span class="ico glyphicon glyphicon-ok" aria-hidden="true"></span>
+                        </button>
+                        <button type="button" class="cancel btn" data-tooltip="toggle" data-placement="auto bottom"
+                                title="Cancel">
+                            <span class="ico glyphicon glyphicon-remove" aria-hidden="true"></span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="media-left">
+        <a href="/movies/{{ media.tmdb_id }}">
+            <img class="media-object" alt="{{ media.title }}" src="{{ media.get_medium_poster_url }}">
+        </a>
+    </div>
+    <div class="media-body">
+        {% include 'widgets/rating.html' %}
+        <span class="rating-info">{{ media.rating_count }} votes</span>
+        {% if media.first_air_date %}<h6>First aired on {{ media.first_air_date.strftime("%A %d %B %Y") }}</h6>{% endif %}
+        <div class="details">
+            {% if media.genres %}<span class="genre">{{ media.genres }}</span>{% endif %}
+            {% if media.get_runtime %}<span class="runtime">{{ media.get_runtime }}</span>{% endif %}
+            {% if media.language %}<span class="language">{{ media.language }}</span>{% endif %}
+            {% if media.status %}<span class="status">{{ media.status }}</span>{% endif %}
+        </div>
+        <p class="description">
+        {% if media.tagline|length > 0 %}<strong>{{ media.tagline }}</strong><br/>{% endif %}
+        {{ media.description }}
+        </p>
+        {% if media.production_companies|length > 0 %}
+            <span class="additional">{{ media.production_companies }}</span>
+        {% endif %}
+        {% if media.last_air_date %}
+            <span class="additional">Last air date {{ media.last_air_date.strftime("%d/%m/%Y") }}</span>
+        {% endif %}
+    </div>
+    <hr/>
+    <div class="media-footer">
+        <h5>Seasons</h5>
+        {% if media.seasons.count() > 0 %}
+        {% for season in media.seasons|reverse %}
+        <div class="panel">
+            <div class="panel-heading">{{ season.title }}</div>
+            {% if season.description|length > 0 %}
+            <div class="panel-body">
+                <p>{{ season.description }}</p>
+            </div>
+            {% endif %}
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Name</th>
+                    <th>Aired</th>
+                    <th>Status</th>
+                    <th>Search</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for episode in season.episodes|reverse %}
+                <tr>
+                    <th scope="row">{{ episode.episode_number }}</th>
+                    <td>{{ episode.title }}</td>
+                    <td>{% if episode.air_date %}{{ episode.air_date.strftime("%A %d %B %Y") }}{% else %}Unknown{% endif %}</td>
+                    <td>{{ episode.status }}</td>
+                    <td>
+                        <button type="button" class="search btn" data-tooltip="toggle" data-placement="auto right" title="Perform manual episode search">
+                            <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
+                        </button>
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endfor %}
+        {% elif not media.in_library %}
+        <p>Please add this show to the library to display season information</p>
+        {% else %}
+        <p>No season data available</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

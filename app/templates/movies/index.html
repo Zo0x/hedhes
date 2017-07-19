@@ -1,0 +1,82 @@
+{% extends "index.html" %}
+
+{% block content %}
+<div class="movies">
+    <div class="sort-actions" data-media-type="movies">
+        <button class="icon sort list" data-tooltip="toggle" data-placement="auto top" title="List View" {% if not is_grid %}style="display: none"{% endif %}>
+            <span class="glyphicon glyphicon-th-list" aria-hidden="true"></span>
+        </button>
+        <button class="icon sort grid" data-swap="watch" data-tooltip="toggle" data-placement="auto top" title="Grid View" {% if is_grid %}style="display: none"{% endif %}>
+            <span class="glyphicon glyphicon-th" aria-hidden="true"></span>
+        </button>
+    </div>
+    <h6>All Movies</h6>
+    {%- if movies|length > 0 %}
+    <ul class="media-list" {% if is_grid %}style="display: none"{% endif %}>
+        {% for media in movies %}
+        <li class="media" data-tmdbid="{{ media.tmdb_id }}" data-media-type="movies">
+            <div class="media-left">
+                <a href="/movies/{{ media.imdb_id }}">
+                    <img class="media-object" alt="{{ media.title }}" src="{{ media.get_small_poster_url }}">
+                </a>
+            </div>
+            <div class="media-body">
+                {% include 'widgets/rating.html' %}
+                {% if media.release_date %}<span class="year">{{ media.release_date.strftime("%-d %B %Y") }}</span>{% endif %}
+                <h4 class="media-heading">
+                    <a href="/movies/{{ media.tmdb_id }}">{{ media.title }}</a>
+                </h4>
+                <p class="description">{{ media.description }}</p>
+                <span class="genre">{{ media.genres }}</span>
+                <span class="status">{{ media.status }}</span>
+            </div>
+            <div class="media-right">
+                <div class="media-actions">
+                    <button class="icon imdb active" data-tooltip="toggle" data-placement="auto top" title="Go to IMDb page" onclick="window.open('{{ imdb_link }}', '_blank');">
+                        <span class="glyphicon glyphicon-film" aria-hidden="true"></span>
+                    </button>
+                    <button class="icon unwatch {% if media.in_library and media.watching %} active{% endif %}" data-swap="watch" data-tooltip="toggle" data-placement="auto top" title="Watching for downloads">
+                        <span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span>
+                    </button>
+                    <button class="icon watch {% if media.in_library and not media.watching %} active{% endif %}" data-swap="unwatch" data-tooltip="toggle" data-placement="auto top" title="Not currently watching">
+                        <span class="glyphicon glyphicon-eye-close" aria-hidden="true"></span>
+                    </button>
+                    <button class="icon notify {% if media.has_files %} active{% endif %}" data-tooltip="toggle" data-placement="auto top" title="Media available">
+                        <span class="glyphicon glyphicon-tint" aria-hidden="true"></span>
+                    </button>
+                </div>
+            </div>
+        </li>
+        {% endfor %}
+    </ul>
+    <div class="row grid media-grid" {% if not is_grid %}style="display: none"{% endif %}>
+        {% for media in movies %}
+        <div class="col-tn-12 col-xxs-6 col-xs-4 col-sm-3 col-md-2 media" data-tmdbid="{{ media.tmdb_id }}" data-media-type="movies">
+            <div class="thumbnail">
+                <a href="/movies/{{ media.tmdb_id }}"><img class="image" alt="{{ media.title }}" src="{{ media.get_large_poster_url }}"></a>
+                <div class="caption">
+                    <h6><a href="/movies/{{ media.tmdb_id }}">{{ media.title }}</a></h6>
+                    <div class="media-actions">
+                        <button class="icon imdb active" data-tooltip="toggle" data-placement="auto top" title="Go to IMDb page" onclick="window.open('{{ imdb_link }}', '_blank');">
+                            <span class="glyphicon glyphicon-film" aria-hidden="true"></span>
+                        </button>
+                        <button class="icon unwatch {% if media.in_library and media.watching %} active{% endif %}" data-swap="watch" data-tooltip="toggle" data-placement="auto top" title="Watching for downloads">
+                            <span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span>
+                        </button>
+                        <button class="icon watch {% if media.in_library and not media.watching %} active{% endif %}" data-swap="unwatch" data-tooltip="toggle" data-placement="auto top" title="Not currently watching">
+                            <span class="glyphicon glyphicon-eye-close" aria-hidden="true"></span>
+                        </button>
+                        <button class="icon notify {% if media.has_files %} active{% endif %}" data-tooltip="toggle" data-placement="auto top" title="Media available">
+                            <span class="glyphicon glyphicon-tint" aria-hidden="true"></span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p>No movies have been added</p>
+    {% endif %}
+</div>
+{% endblock %}

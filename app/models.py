@@ -124,6 +124,9 @@ class Settings(db.Model, CRUD):
             return ''
         return setting.value
 
+    def __repr__(self):
+        return '<Setting %i>: %s (%s) -> %s [%s]' % (self.id, self.name, self.key, self.value, self.type)
+
 
 class Movie(db.Model, Media, CRUD):
     __tablename__ = 'movies'

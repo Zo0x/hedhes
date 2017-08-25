@@ -218,9 +218,18 @@ def save_tv(tmdb_id):
     return redirect('/tv/' + tmdb_id)
 
 
-@app.route('/settings')
+@app.route('/settings', methods=['GET', 'POST'])
 def settings():
     settings_form = SettingsForm.factory(Settings.collection())
+    if settings_form.validate_on_submit():
+        for setting in settings_form:
+            if setting.name == 'csrf_token':
+                continue
+            setcls = Settings.factory(key=setting.name)
+            if setcls is None:
+                setcls = Settings()
+            setcls.value = setting.data
+            setcls.save()
     settings_form.quality.data = Settings.get('default_search_quality')
     return render_template("settings.html", title='Settings', heading='Settings',
                            search_form=SearchForm(), settings_form=settings_form)

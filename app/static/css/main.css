@@ -577,6 +577,21 @@ footer {
     text-shadow: none;
 }
 
+.main-settings .checkbox input {
+    display: inline;
+    position: relative;
+    width: auto;
+    height: auto;
+    margin: 0;
+}
+
+.main-settings .checkbox input:focus,
+.main-settings .checkbox input:hover,
+.main-settings .checkbox input:active {
+    outline: none;
+}
+
+
 .tooltip > .tooltip-inner {
   background: repeating-linear-gradient(
       45deg,

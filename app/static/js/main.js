@@ -144,4 +144,17 @@ jQuery(function () {
         jQuery('.media-list').hide();
         Cookies.set('mm_' + jQuery('.sort-actions').data('media-type') + '_sort', 'grid');
     });
+    jQuery('.log-list .log-item').click(function() {
+        var div = jQuery(this).next('.log-data');
+        if (div.hasClass('open'))
+        {
+            div.removeClass('open');
+            div.addClass('closed');
+        }
+        else
+        {
+            div.removeClass('closed');
+            div.addClass('open');
+        }
+    });
 });

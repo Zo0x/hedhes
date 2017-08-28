@@ -1,5 +1,10 @@
 {% extends "index.html" %}
 {% block content %}
+<div class="overview-actions">
+    <button class="icon refresh notify active {% if library.refreshing_all %} spin{% endif %}" data-tooltip="toggle" data-placement="auto top" title="Refresh library" data-alt-title="Refreshing local library">
+        <span class="glyphicon glyphicon-refresh" aria-hidden="true"></span>
+    </button>
+</div>
 <div class="movies">
     <h6>Recently Added Movies</h6>
     {%- if recent_movies|length > 0 %}

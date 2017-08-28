@@ -105,3 +105,4 @@ MediaManagerEnv/
 db_repository/
 app.db
 .idea/
+tmp/

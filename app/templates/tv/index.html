@@ -54,11 +54,11 @@
     </ul>
     <div class="row grid media-grid" {% if not is_grid %}style="display: none"{% endif %}>
         {% for media in tv_shows %}
-        <div class="col-tn-12 col-xxs-6 col-xs-4 col-sm-3 col-md-2 media" data-tmdbid="{{ media.tmdb_id }}" data-media-type="movies">
+        <div class="col-tn-12 col-xxs-6 col-xs-4 col-sm-3 col-md-2 media" data-tmdbid="{{ media.tmdb_id }}" data-media-type="tv">
             <div class="thumbnail">
-                <a href="/movies/{{ media.tmdb_id }}"><img class="image" alt="{{ media.title }}" src="{{ media.get_large_poster_url }}"></a>
+                <a href="/tv/{{ media.tmdb_id }}"><img class="image" alt="{{ media.title }}" src="{{ media.get_large_poster_url }}"></a>
                 <div class="caption">
-                    <h6><a href="/movies/{{ media.tmdb_id }}">{{ media.title }}</a></h6>
+                    <h6><a href="/tv/{{ media.tmdb_id }}">{{ media.title }}</a></h6>
                     <div class="media-actions">
                         <button class="icon imdb active" data-tooltip="toggle" data-placement="auto top" title="Go to IMDb page" onclick="window.open('{{ imdb_link }}', '_blank');">
                             <span class="glyphicon glyphicon-film" aria-hidden="true"></span>

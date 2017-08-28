@@ -2,11 +2,11 @@
 
 {% block content %}
 <div class="tabs">
-    <h6 class="movies active" data-tab="movies">Movies ({{ movies|length }})</h6>
-    <h6 class="tv" data-tab="tv">TV ({{ tv|length }})</h6>
+    <h6 class="movies {% if movies|length > 0 or tv|length == 0 %}active{% endif %}" data-tab="movies">Movies ({{ movies|length }})</h6>
+    <h6 class="tv {% if movies|length == 0 and tv|length > 0 %}active{% endif %}" data-tab="tv">TV ({{ tv|length }})</h6>
 </div>
 <div class="tabs-content">
-    <div class="movies tab active">
+    <div class="movies tab {% if movies|length > 0 or tv|length == 0 %}active{% endif %}">
         {% if movies|length == 0 %}
         <h2>No search results found</h2>
         {% else %}
@@ -32,7 +32,7 @@
         </ul>
         {% endif %}
     </div>
-    <div class="tv tab">
+    <div class="tv tab {% if movies|length == 0 and tv|length > 0 %}active{% endif %}">
         {% if tv|length == 0 %}
         <h2>No search results found</h2>
         {% else %}

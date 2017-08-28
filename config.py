@@ -34,7 +34,31 @@ DEFAULT_SETTINGS = [
     {
         'key': 'enable_search',
         'value': True,
-        'name': 'Enable Search',
+        'name': 'Enable Media Search',
         'type': 'bool'
+    },
+    {
+        'key': 'movie_media_path',
+        'value': '/media/Movies',
+        'name': 'Movie Media Path',
+        'type': 'string'
+    },
+    {
+        'key': 'tv_media_path',
+        'value': '/media/TV',
+        'name': 'TV Media Path',
+        'type': 'string'
+    },
+    {
+        'key': 'movie_download_path',
+        'value': '/download/',
+        'name': 'Movie Download Path',
+        'type': 'string'
+    },
+    {
+        'key': 'tv_download_path',
+        'value': '/download/',
+        'name': 'TV Download Path',
+        'type': 'string'
     }
 ]

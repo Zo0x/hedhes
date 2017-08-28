@@ -1,0 +1,32 @@
+{% extends "index.html" %}
+{% block content %}
+    {%- if logs|length > 0 %}
+    <table class="table log-list">
+        <thead>
+        <tr>
+            <th>#</th>
+            <th>Date</th>
+            <th>Category</th>
+            <th>Data</th>
+            <th>Severity</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for item in logs|reverse %}
+        <tr class="log-item" role="button">
+            <th scope="row">{{ item.id }}</th>
+            <td>{{ item.date.strftime("%d/%M/%Y %H:%m:%S") }}</td>
+            <td>{{ item.category.title() }}</td>
+            <td>{{ item.name }}</td>
+            <td>{{ item.severity_str }}</td>
+        </tr>
+        <tr class="log-data closed">
+            <td colspan="5"><div>{{ item.description }}<br/>sdfojwoiefjoiweajfoijweaifowaiefji</div></td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>There are no logs available to display</p>
+    {% endif %}
+{% endblock %}

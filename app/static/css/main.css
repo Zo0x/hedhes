@@ -46,6 +46,8 @@ a, area, button, [role="button"], input, label, select, summary, textarea {
     touch-action: manipulation;
 }
 
+[role=button]{cursor:pointer}
+
 button, select {
     text-transform: none;
 }
@@ -286,6 +288,49 @@ footer {
     font-size: 0.8rem;
 }
 
+.table-striped > tbody > tr:nth-child(odd) {
+    background-color: #1d1f27;
+}
+
+.table-striped-even > tbody > tr:nth-child(even) {
+    background-color: #1d1f27;
+}
+
+table.log-list {
+  border-collapse: collapse;
+}
+
+table.log-list > tbody > tr:nth-child(4n+1) {
+    background-color: #1d1f27;
+}
+
+table.log-list > tbody > tr:nth-child(2n+2) {
+    background-color: #0e1019;
+}
+
+table.log-list > tbody > tr.log-data > td {
+    padding: 0;
+    overflow: hidden;
+}
+
+table.log-list > tbody > tr.log-data div {
+    max-height: 0;
+    padding: 0 8px;
+    box-sizing: border-box;
+    overflow: hidden;
+    -webkit-transition: max-height 0.3s, padding 0.3s;
+    -moz-transition: max-height 0.3s, padding 0.3s;
+    transition: max-height 0.3s, padding 0.3s;
+}
+
+table.log-list > tbody > tr.log-data.open div {
+    max-height: 500px;
+    padding: 8px;
+    -webkit-transition: max-height 0.6s, padding 0.6s;
+    -moz-transition: max-height 0.6s, padding 0.6s;
+    transition: max-height 0.6s, padding 0.6s;
+}
+
 .media-list .media .media-body .year,
 .media-list .media .media-body .rating {
     float: right;
@@ -418,16 +463,19 @@ footer {
     margin-top: 10px;
 }
 
-.media.view .media-actions {
+.media.view .media-actions,
+.overview-actions {
     margin-top: -60px;
 }
 
-.media .media-actions {
+.media .media-actions,
+.overview-actions {
     text-align: right;
     margin-bottom: 30px;
 }
 
-.media .media-actions button {
+.media .media-actions button,
+.overview-actions button {
     background: none;
     border: none;
     outline: none;
@@ -435,11 +483,13 @@ footer {
     display: none;
 }
 
-.media .media-actions button.active {
+.media .media-actions button.active,
+.overview-actions button.active {
     display: inline-block;
 }
 
-.media .media-actions button.active.notify {
+.media .media-actions button.active.notify,
+.overview-actions button.active.notify {
     cursor: default;
 }
 
@@ -479,7 +529,8 @@ footer {
     to{-ms-transform:rotate(360deg);}
 }
 
-.media .media-actions button.refresh.spin span {
+.media .media-actions button.refresh.spin span,
+.overview-actions button.refresh.spin span {
     -webkit-animation-name: refreshSpin;
     -webkit-animation-duration: 2.5s;
     -webkit-animation-iteration-count: infinite;

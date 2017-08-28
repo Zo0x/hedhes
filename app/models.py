@@ -1,7 +1,9 @@
 from app import db, tmdb
 from datetime import datetime, timedelta
 import sqlalchemy.types as types
+import errno
 import json
+import os
 
 
 class JsonType(types.TypeDecorator):
@@ -42,7 +44,7 @@ class CRUD:
 class Settings(db.Model, CRUD):
     __tablename__ = 'settings'
     id = db.Column(db.Integer, primary_key=True)
-    key = db.Column(db.String(255), unique=True)
+    key = db.Column(db.String(255), unique=True, index=True)
     str_value = db.Column(db.String(255), index=True)
     value = None
     name = db.Column(db.String(255), index=True)
@@ -96,6 +98,160 @@ class Settings(db.Model, CRUD):
 
     def __repr__(self):
         return '<Setting %i>: %s (%s) -> %s [%s]' % (self.id, self.name, self.key, self.str_value, self.type)
+
+
+class Job(db.Model, CRUD):
+    __tablename__ = 'job_queue'
+    id = db.Column(db.Integer, primary_key=True)
+    key = db.Column(db.String(255), index=True)
+    name = db.Column(db.String(255))
+    description = db.Column(db.String(1000))
+    status = db.Column(db.String(1000), index=True, default='Scheduled')
+    start_date = db.Column(db.DateTime, index=True)
+    stop_date = db.Column(db.DateTime, index=True)
+    lock_file = db.Column(db.String(255), index=True)
+    lock_data = db.Column(db.String(255), index=True)
+    running = db.Column(db.Boolean, index=True, default=False)
+    errors = db.Column(db.Boolean, index=True, default=False)
+
+    def start(self):
+        self.status = 'Started'
+        self.create_lock_file()
+        self.start_date = datetime.utcnow()
+        Log.info('Job started: %s (%i)' % (self.name, self.id))
+        self.save()
+
+    def stop(self):
+        self.status = 'Finished'
+        self.remove_lock_file()
+        self.stop_date = datetime.utcnow()
+        Log.info('Job completed: %s (%i)' % (self.name, self.id))
+        self.save()
+
+    def abort(self, reason=''):
+        self.status = 'Aborted'
+        self.remove_lock_file()
+        self.stop_date = datetime.utcnow()
+        Log.warning('Job aborted: %s (%i)' % (self.name, self.id), reason)
+        self.save()
+
+    def log_error(self, status, error):
+        self.errors = True
+        self.status = 'An error occurred: %s' % status
+        Log.error(status, error, 'jobs')
+
+    def create_lock_file(self, data=datetime.now().strftime('%c')):
+        if not os.path.exists(os.path.dirname(self.lock_file)):
+            try:
+                os.makedirs(os.path.dirname(self.lock_file))
+            except OSError as exc:  # Guard against race condition
+                if exc.errno != errno.EEXIST:
+                    self.log_error('Unable to create lock file for job %s (%i)' % (self.name, self.id),
+                                   'Unable to create directory structure (%s)' % self.lock_file)
+                    return False
+
+        if os.path.exists(self.lock_file):
+            self.log_error('Unable to create lock file for job %s (%i)' % (self.name, self.id),
+                           'The lock file already exists (%s)' % self.lock_file)
+            return False
+
+        try:
+            with open(self.lock_file, 'w') as f:
+                f.write(data)
+        except Exception as exc:
+            self.log_error('Unable to create lock file for job %s (%i)' % (self.name, self.id),
+                           'Unable to write to file (%s) [%s]' % (self.lock_file, exc))
+            return False
+        self.lock_data = data
+        return True
+
+    def remove_lock_file(self):
+        if not os.path.exists(self.lock_file):
+            Log.warn('Unable to remove lock file for job %s (%i)' % (self.name, self.id), 'Log file does not exist')
+            return True
+
+        try:
+            with open(self.lock_file, 'r') as f:
+                data = f.read()
+        except Exception as exc:
+            self.log_error('Unable to remove lock file for job %s (%i)' % (self.name, self.id),
+                           'Unable to read from file (%s) [%s]' % (self.lock_file, exc))
+            return False
+
+        if data != self.lock_data:
+            self.log_error('Unable to remove lock file for job %s (%i)' % (self.name, self.id),
+                           'The lock file belongs to another job (%s) [%s]' % (self.lock_file, data))
+            return False
+
+        try:
+            os.remove(self.lock_file)
+        except Exception as exc:
+            self.log_error('Unable to remove lock file for job %s (%i)' % (self.name, self.id),
+                           'Unable to remove file (%s) [%s]' % (self.lock_file, exc))
+            return False
+
+        Log.info('Removed lock file for job %s (%i)' % (self.name, self.id), 'Log file removed with data: %s' % data)
+        return True
+
+
+class Log(db.Model, CRUD):
+    __tablename__ = 'logs'
+    id = db.Column(db.Integer, primary_key=True)
+    date = db.Column(db.DateTime, index=True)
+    category = db.Column(db.String(255), index=True)
+    name = db.Column(db.String(255), index=True)
+    description = db.Column(db.Text)
+    severity = db.Column(db.Integer, index=True, default=0)  # 0 Debug, 1 Info, 2 Warning, 3 Error, 4 Critical, 5 Fatal
+
+    SEVERITY_DEBUG = 0
+    SEVERITY_INFO = 1
+    SEVERITY_WARN = 2
+    SEVERITY_ERROR = 3
+    SEVERITY_CRITICAL = 4
+    SEVERITY_FATAL = 5
+
+    @property
+    def severity_str(self):
+        if self.severity == 1:
+            return 'Info'
+        if self.severity == 2:
+            return 'Warning'
+        if self.severity == 3:
+            return 'Error'
+        if self.severity == 4:
+            return 'Critical'
+        if self.severity == 5:
+            return 'Fatal'
+        return 'Debug'
+
+
+    @classmethod
+    def add(cls, name, description='', category='default', severity=0):
+        cls(date=datetime.utcnow(), category=category, name=name, description=description, severity=severity).save()
+
+    @classmethod
+    def debug(cls, name, description='', category='default'):
+        cls.add(name, description, category, cls.SEVERITY_DEBUG)
+
+    @classmethod
+    def info(cls, name, description='', category='default'):
+        cls.add(name, description, category, cls.SEVERITY_INFO)
+
+    @classmethod
+    def warning(cls, name, description='', category='default'):
+        cls.add(name, description, category, cls.SEVERITY_WARN)
+
+    @classmethod
+    def error(cls, name, description='', category='default'):
+        cls.add(name, description, category, cls.SEVERITY_ERROR)
+
+    @classmethod
+    def critical(cls, name, description='', category='default'):
+        cls.add(name, description, category, cls.SEVERITY_CRITICAL)
+
+    @classmethod
+    def fatal(cls, name, description='', category='default'):
+        cls.add(name, description, category, cls.SEVERITY_FATAL)
 
 
 class Media:

@@ -3,7 +3,8 @@ from wtforms import StringField
 
 from app import app, tmdb
 from .forms import SearchForm, TVSettingsForm, MovieSettingsForm, QualityForm, SettingsForm
-from .models import Movie, TV, TVSeason, TVEpisode, TVEpisodeFile, MovieFile, Settings
+from .models import Movie, TV, TVSeason, TVEpisode, TVEpisodeFile, MovieFile, Settings, Log
+from .library import Library
 from datetime import datetime
 from .decorators import async
 import urllib
@@ -29,7 +30,7 @@ def manifest():
 @app.route('/')
 def index():
     return render_template("overview.html", title='Overview', heading='Overview', search_form=SearchForm(),
-                           recent_movies=Movie.recent_movies(), recent_tv=TV.recent_tv())
+                           recent_movies=Movie.recent_movies(), recent_tv=TV.recent_tv(), library=Library())
 
 
 @app.route('/movies')
@@ -79,6 +80,30 @@ def unwatch_movie(tmdb_id):
         mov = Movie(data)
     mov.watching = False
     mov.save()
+    return jsonify({'result': True, 'data': 'Movie updated'})
+
+
+# TODO: Implement the Movie manual search functionality
+@app.route('/movie/search/<tmdb_id>', methods=['GET', 'POST'])
+def research_movie(tmdb_id):
+    mov = Movie.query.filter_by(tmdb_id=tmdb_id).first()
+    if mov is None:
+        data = tmdb.get_movie(tmdb_id)
+        if not data:
+            return jsonify({'result': False, 'data': 'Movie not found'})
+        mov = Movie(data)
+    return jsonify({'result': True, 'data': 'Movie updated'})
+
+
+# TODO: Implement the Movie refresh functionality
+@app.route('/movie/refresh/<tmdb_id>', methods=['GET', 'POST'])
+def refresh_movie(tmdb_id):
+    mov = Movie.query.filter_by(tmdb_id=tmdb_id).first()
+    if mov is None:
+        data = tmdb.get_movie(tmdb_id)
+        if not data:
+            return jsonify({'result': False, 'data': 'Movie not found'})
+        mov = Movie(data)
     return jsonify({'result': True, 'data': 'Movie updated'})
 
 
@@ -168,6 +193,19 @@ def unwatch_tv(tmdb_id):
     return jsonify({'result': True, 'data': 'TV show updated: not watching'})
 
 
+# TODO: Implement the TV manual search functionality
+@app.route('/tv/search/<tmdb_id>', methods=['GET', 'POST'])
+def research_tv(tmdb_id):
+    tv = TV.query.filter_by(tmdb_id=tmdb_id).first()
+    if tv is None:
+        data = tmdb.get_tv(tmdb_id)
+        if not data:
+            return jsonify({'result': False, 'data': 'TV show not found'})
+        tv = TV(data)
+    return jsonify({'result': True, 'data': 'TV show updated'})
+
+
+# TODO: Implement the TV refresh functionality
 @app.route('/tv/refresh/<tmdb_id>', methods=['GET', 'POST'])
 def refresh_tv(tmdb_id):
     tv = TV.query.filter_by(tmdb_id=tmdb_id).first()
@@ -237,7 +275,7 @@ def settings():
 
 @app.route('/logs')
 def logs():
-    return render_template("index.html", title='Logs', heading='Logs', search_form=SearchForm())
+    return render_template("logs.html", title='Logs', heading='Logs', search_form=SearchForm(), logs=Log().collection())
 
 
 @app.route('/search', methods=['GET', 'POST'])

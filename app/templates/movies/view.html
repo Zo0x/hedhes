@@ -18,7 +18,7 @@
         <button class="icon notify {% if media.has_files %} active{% endif %}" data-tooltip="toggle" data-placement="auto top" title="Media available">
             <span class="glyphicon glyphicon-tint" aria-hidden="true"></span>
         </button>
-        <button class="icon refresh notify {% if media.in_library %} active{% endif %}" data-tooltip="toggle" data-placement="auto top" title="Refresh library item" data-alt-title="Refreshing local library">
+        <button class="icon refresh notify {% if media.in_library %} active{% endif %} {% if refreshing %} notify spin {% endif %}" data-tooltip="toggle" data-placement="auto top" {% if refreshing %}data-alt-{% endif %}title="Refresh library item" {% if not refreshing %}data-alt-{% endif %}title="Refreshing local library">
             <span class="glyphicon glyphicon-refresh" aria-hidden="true"></span>
         </button>
         <button class="icon add {% if not media.in_library %} active{% endif %}" data-tooltip="toggle" data-placement="auto top" title="Add to library">

@@ -1,9 +1,7 @@
 from .decorators import async
 from app import app
 from .models import Movie, TV, Job
-import datetime
 import os
-import errno
 import time
 
 
@@ -15,14 +13,26 @@ class Library:
     REFRESH_ALL_MOVIE_LOCK_PATH = os.path.join(BASE_LOCK_PATH, 'refresh_all_movie.lck')
     REFRESH_MOVIE_ITEM_LOCK_PATH = os.path.join(BASE_LOCK_PATH, 'refresh_movie', '{{tmdb_id.lck}}')
 
-    @property
-    def refreshing_all(self):
-        return True
+    @staticmethod
+    def refreshing_all():
+        return len(Job.collection(key='refresh_all', running=True)) > 0
+
+    @staticmethod
+    def refreshing_tv(tmdb_id=None):
+        if tmdb_id is None:
+            return len(Job.collection(key='refresh_tv', running=True)) > 0
+        return len(Job.collection(key='refresh_tv:%i' % tmdb_id, running=True)) > 0
+
+    @staticmethod
+    def refreshing_movie(tmdb_id=None):
+        if tmdb_id is None:
+            return len(Job.collection(key='refresh_movie', running=True)) > 0
+        return len(Job.collection(key='refresh_movie:%i' % tmdb_id, running=True)) > 0
 
     @async
     def refresh_all(self):
         if os.path.exists(self.REFRESH_ALL_LOCK_PATH):
-            if len(Job.collection(key='refresh_all', running=True)) > 0:
+            if self.refreshing_all:
                 return
             os.remove(self.REFRESH_ALL_LOCK_PATH)
         job = Job(
@@ -40,24 +50,20 @@ class Library:
         path = self.REFRESH_TV_ITEM_LOCK_PATH.replace('{{tmdb_id.lck}}', item.tmdb_id)
         if os.path.exists(path):
             return
-        self.create_lock_file(path)
 
     @async
-    def refresh_tv(self):
+    def refresh_tv_all(self):
         if os.path.exists(self.REFRESH_ALL_TV_LOCK_PATH):
             return
-        self.create_lock_file(self.REFRESH_ALL_TV_LOCK_PATH)
 
     @async
     def refresh_movie_item(self, item: Movie):
         path = self.REFRESH_MOVIE_ITEM_LOCK_PATH.replace('{{tmdb_id.lck}}', item.tmdb_id)
         if os.path.exists(path):
             return
-        self.create_lock_file(path)
 
     @async
-    def refresh_movie(self):
+    def refresh_movie_all(self):
         if os.path.exists(self.REFRESH_ALL_MOVIE_LOCK_PATH):
             return
-        self.create_lock_file(self.REFRESH_ALL_MOVIE_LOCK_PATH)
 

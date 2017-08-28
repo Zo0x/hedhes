@@ -53,16 +53,35 @@ jQuery(function () {
         el.data('alt-title', tool);
         el.tooltip('fixTitle');
     }
-    jQuery('.media.view .media-actions .icon.refresh:not(spin)').click(function(){
+    jQuery('.media.view .media-actions .icon.refresh').click(function(){
         if (jQuery(this).hasClass('spin'))
             return;
         var type = jQuery('.media.view').data('media-type');
-        swapTitle(jQuery(this));
         jQuery.ajax({url: '/' + type + '/refresh/' + jQuery('.media.view').data('tmdbid'), context: this,
         success: function(result){
             if (result.result)
             {
-                jQuery(this).addClass('spin');
+                jQuery(this).addClass('spin').addClass('notify');
+                swapTitle(jQuery(this));
+                var checkTimer = setTimeout(checkFunction, 1000);
+                function checkFunction()
+                {
+                    jQuery.ajax({url: '/' + type + '/refresh_status/' + jQuery('.media.view').data('tmdbid'), context: this,
+                    success: function(result){
+                        if (result.result)
+                        {
+                            checkTimer = setTimeout(checkFunction, 1000);
+                        }
+                        else
+                        {
+                            jQuery(this).removeClass('spin').removeClass('notify');
+                            swapTitle(jQuery(this));
+                            clearTimeout(checkTimer);
+                        }
+                    }, error: function(result){
+                            checkTimer = setTimeout(checkFunction, 1000);
+                    }});
+                }
             }
             else
             {
@@ -156,5 +175,42 @@ jQuery(function () {
             div.removeClass('closed');
             div.addClass('open');
         }
+    });
+    jQuery('.overview-actions .icon.refresh').click(function(){
+        if (jQuery(this).hasClass('spin'))
+            return;
+        jQuery.ajax({url: '/refresh', context: this,
+        success: function(result){
+            if (result.result)
+            {
+                jQuery(this).addClass('spin').addClass('notify');
+                swapTitle(jQuery(this));
+                var checkTimer = setTimeout(checkFunction, 1000);
+                function checkFunction()
+                {
+                    jQuery.ajax({url: '/refresh/status', context: this,
+                    success: function(result){
+                        if (result.result)
+                        {
+                            checkTimer = setTimeout(checkFunction, 1000);
+                        }
+                        else
+                        {
+                            jQuery(this).removeClass('spin').removeClass('notify');
+                            swapTitle(jQuery(this));
+                            clearTimeout(checkTimer);
+                        }
+                    }, error: function(result){
+                            checkTimer = setTimeout(checkFunction, 1000);
+                    }});
+                }
+            }
+            else
+            {
+                alert('Unable to refresh library');
+            }
+        }, error: function(result){
+                alert('Unable to refresh library');
+        }});
     });
 });

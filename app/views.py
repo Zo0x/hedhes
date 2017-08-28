@@ -30,7 +30,20 @@ def manifest():
 @app.route('/')
 def index():
     return render_template("overview.html", title='Overview', heading='Overview', search_form=SearchForm(),
-                           recent_movies=Movie.recent_movies(), recent_tv=TV.recent_tv(), library=Library())
+                           recent_movies=Movie.recent_movies(), recent_tv=TV.recent_tv(),
+                           refreshing=Library.refreshing_all())
+
+
+@app.route('/refresh', methods=['GET', 'POST'])
+def refresh_library():
+    library = Library()
+    library.refresh_all()
+    return jsonify({'result': True, 'data': 'Library refresh scheduled'})
+
+
+@app.route('/refresh/status/', methods=['GET', 'POST'])
+def refresh_library_status():
+    return jsonify({'result': Library.refreshing_all(), 'data': 'Library refresh status'})
 
 
 @app.route('/movies')
@@ -54,7 +67,7 @@ def movie(tmdb_id):
     settings_form.quality.data = mov.search_quality
     return render_template('movies/view.html',  title=mov.title,
                            heading=mov.title, media=mov, search_form=SearchForm(),
-                           settings_form=settings_form, imdb_link=imdb)
+                           settings_form=settings_form, imdb_link=imdb, refreshing=Library.refreshing_movie(tmdb_id))
 
 
 @app.route('/movies/watch/<tmdb_id>', methods=['GET', 'POST'])
@@ -92,7 +105,7 @@ def research_movie(tmdb_id):
         if not data:
             return jsonify({'result': False, 'data': 'Movie not found'})
         mov = Movie(data)
-    return jsonify({'result': True, 'data': 'Movie updated'})
+    return jsonify({'result': True, 'data': 'Movie manual search scheduled'})
 
 
 # TODO: Implement the Movie refresh functionality
@@ -104,7 +117,13 @@ def refresh_movie(tmdb_id):
         if not data:
             return jsonify({'result': False, 'data': 'Movie not found'})
         mov = Movie(data)
-    return jsonify({'result': True, 'data': 'Movie updated'})
+    Library.refresh_movie_item(mov)
+    return jsonify({'result': True, 'data': 'Movie refresh scheduled'})
+
+
+@app.route('/movie/refresh_status/<tmdb_id>', methods=['GET', 'POST'])
+def refresh_movie_status(tmdb_id):
+    return jsonify({'result': Library.refreshing_movie(tmdb_id), 'data': 'Movie refresh status'})
 
 
 @app.route('/movies/add/<tmdb_id>', methods=['GET', 'POST'])
@@ -164,7 +183,7 @@ def tvp(tmdb_id):
     settings_form.quality.data = tv.search_quality
     return render_template('tv/view.html',  title=tv.title,
                            heading=tv.title, media=tv, search_form=SearchForm(),
-                           settings_form=settings_form, imdb_link=imdb)
+                           settings_form=settings_form, imdb_link=imdb, refreshing=Library.refreshing_tv(tmdb_id))
 
 
 @app.route('/tv/watch/<tmdb_id>', methods=['GET', 'POST'])
@@ -200,7 +219,7 @@ def research_tv(tmdb_id):
     if tv is None:
         data = tmdb.get_tv(tmdb_id)
         if not data:
-            return jsonify({'result': False, 'data': 'TV show not found'})
+            return jsonify({'result': False, 'data': 'TV show manual search scheduled'})
         tv = TV(data)
     return jsonify({'result': True, 'data': 'TV show updated'})
 
@@ -214,7 +233,13 @@ def refresh_tv(tmdb_id):
         if not data:
             return jsonify({'result': False, 'data': 'TV show not found'})
         tv = TV(data)
-    return jsonify({'result': True, 'data': 'TV show updated'})
+    Library.refresh_tv_item(tv)
+    return jsonify({'result': True, 'data': 'TV show refresh scheduled'})
+
+
+@app.route('/tv/refresh_status/<tmdb_id>', methods=['GET', 'POST'])
+def refresh_tv_status(tmdb_id):
+    return jsonify({'result': Library.refreshing_tv(tmdb_id), 'data': 'TV refresh status'})
 
 
 @app.route('/tv/add/<tmdb_id>', methods=['GET', 'POST'])

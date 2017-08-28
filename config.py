@@ -11,11 +11,19 @@ SECRET_KEY = os.urandom(24)
 # Borrowed this from sickrage - thanks clinton!
 TMDB_API_KEY = 'edc5f123313769de83a71e157758030b'
 
+AVAILABLE_QUALITIES = [
+    ('brdisk', 'BR-Disk'), ('1080p', '1080p'), ('720p', '720p'), ('brrip', 'BR-Rip'), ('dvdr', 'DVD-R'),
+    ('dvdrip', 'DVD-Rip'), ('screener', 'Screener'), ('r5', 'R5'), ('tc', 'TeleCine'), ('ts', 'TeleSync'),
+    ('cam', 'Cam'), ('any', 'Any')
+]
+
 DEFAULT_SETTINGS = [
     {
         'key': 'default_search_quality',
-        'value': '1080p;720p',
-        'name': 'Search Quality'
+        'value': ['1080p', '720p'],
+        'name': 'Default Search Quality',
+        'type': 'list',
+        'choices': AVAILABLE_QUALITIES
     },
     {
         'key': 'search_frequency',
@@ -29,10 +37,4 @@ DEFAULT_SETTINGS = [
         'name': 'Enable Search',
         'type': 'bool'
     }
-]
-
-AVAILABLE_QUALITIES = [
-    ('brdisk', 'BR-Disk'), ('1080p', '1080p'), ('720p', '720p'), ('brrip', 'BR-Rip'), ('dvdr', 'DVD-R'),
-    ('dvdrip', 'DVD-Rip'), ('screener', 'Screener'), ('r5', 'R5'), ('tc', 'TeleCine'), ('ts', 'TeleSync'),
-    ('cam', 'Cam'), ('any', 'Any')
 ]

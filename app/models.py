@@ -1,28 +1,23 @@
 from app import db, tmdb
 from datetime import datetime, timedelta
 import sqlalchemy.types as types
+import json
 
 
-class QualityType(types.TypeDecorator):
+class JsonType(types.TypeDecorator):
     impl = types.String
 
     def process_literal_param(self, value, dialect):
-        if not isinstance(value, list):
-            return value
-        return ';'.join(value)
+        return json.dumps(value)
 
     def process_bind_param(self, value, dialect):
-        if not isinstance(value, list):
-            return value
-        return ';'.join(value)
+        return json.dumps(value)
 
     def process_result_value(self, value, dialect):
-        if value is None:
-            return []
-        return value.split(';')
+        return json.loads(value)
 
     def copy(self, **kw):
-        return QualityType(self.impl.length)
+        return JsonType(self.impl.length)
 
 
 class CRUD:
@@ -42,6 +37,65 @@ class CRUD:
     @classmethod
     def collection(cls, **kwargs):
         return db.session.query(cls).filter_by(**kwargs).all()
+
+
+class Settings(db.Model, CRUD):
+    __tablename__ = 'settings'
+    id = db.Column(db.Integer, primary_key=True)
+    key = db.Column(db.String(255), unique=True)
+    str_value = db.Column(db.String(255), index=True)
+    value = None
+    name = db.Column(db.String(255), index=True)
+    type = db.Column(db.String(255), index=True, default='string')
+    html_type = db.Column(db.String(255), index=True, default='text')
+    html_class = db.Column(db.String(255), index=True, default='form-control')
+    html_placeholder = db.Column(db.String(255), index=True, default='')
+
+    @staticmethod
+    def get(key):
+        setting = Settings.factory(key=key)
+        if setting is None:
+            return ''
+        return setting.value
+
+    def save(self):
+        if isinstance(self.value, str):
+            self.str_value = self.value
+            super().save()
+            return
+        self.str_value = 'json://' + json.dumps(self.value)
+        super().save()
+
+    @classmethod
+    def factory(cls, **kwargs):
+        if 'value' in kwargs.keys():
+            kwargs['str_value'] = kwargs['value']
+            del(kwargs['value'])
+        clsmodel = db.session.query(cls).filter_by(**kwargs).first()
+        if clsmodel is None:
+            return clsmodel
+        if clsmodel.str_value.startswith('json://'):
+            clsmodel.value = json.loads(clsmodel.str_value[7:])
+        else:
+            clsmodel.value = clsmodel.str_value
+        return clsmodel
+
+    @classmethod
+    def collection(cls, **kwargs):
+        if 'value' in kwargs.keys():
+            kwargs['str_value'] = kwargs['value']
+            del(kwargs['value'])
+        collection = []
+        for item in db.session.query(cls).filter_by(**kwargs).all():
+            if item.str_value.startswith('json://'):
+                item.value = json.loads(item.str_value[7:])
+            else:
+                item.value = item.str_value
+            collection.append(item)
+        return collection
+
+    def __repr__(self):
+        return '<Setting %i>: %s (%s) -> %s [%s]' % (self.id, self.name, self.key, self.str_value, self.type)
 
 
 class Media:
@@ -106,28 +160,6 @@ class Media:
         super().save()
 
 
-class Settings(db.Model, CRUD):
-    __tablename__ = 'settings'
-    id = db.Column(db.Integer, primary_key=True)
-    key = db.Column(db.String(255), unique=True)
-    value = db.Column(db.String(255), index=True)
-    name = db.Column(db.String(255), index=True)
-    type = db.Column(db.String(255), index=True, default='string')
-    html_type = db.Column(db.String(255), index=True, default='text')
-    html_class = db.Column(db.String(255), index=True, default='form-control')
-    html_placeholder = db.Column(db.String(255), index=True, default='')
-
-    @staticmethod
-    def get(key):
-        setting = Settings.factory(key=key)
-        if setting is None:
-            return ''
-        return setting.value
-
-    def __repr__(self):
-        return '<Setting %i>: %s (%s) -> %s [%s]' % (self.id, self.name, self.key, self.value, self.type)
-
-
 class Movie(db.Model, Media, CRUD):
     __tablename__ = 'movies'
     id = db.Column(db.Integer, primary_key=True)
@@ -152,7 +184,7 @@ class Movie(db.Model, Media, CRUD):
     in_library = db.Column(db.Boolean)
     has_files = db.Column(db.Boolean)
     added = db.Column(db.DateTime, index=True)
-    search_quality = db.Column(QualityType(255), index=True)
+    search_quality = db.Column(JsonType(255), index=True)
 
     files = db.relationship('MovieFile', backref='media', lazy='dynamic', cascade="all, delete-orphan")
 
@@ -240,7 +272,7 @@ class TV(db.Model, CRUD, Media):
     in_library = db.Column(db.Boolean)
     has_files = db.Column(db.Boolean)
     added = db.Column(db.DateTime, index=True)
-    search_quality = db.Column(QualityType(255), index=True)
+    search_quality = db.Column(JsonType(255), index=True)
 
     seasons = db.relationship('TVSeason', backref='media', lazy='dynamic', cascade="all, delete-orphan")
     episodes = db.relationship('TVEpisode', backref='media', lazy='dynamic', cascade="all, delete-orphan")

@@ -227,10 +227,10 @@ def settings():
                 continue
             setcls = Settings.factory(key=setting.name)
             if setcls is None:
-                setcls = Settings()
+                print('Unable to save setting: ' + setting.name)
+                continue
             setcls.value = setting.data
             setcls.save()
-    settings_form.quality.data = Settings.get('default_search_quality')
     return render_template("settings.html", title='Settings', heading='Settings',
                            search_form=SearchForm(), settings_form=settings_form)
 

@@ -1,9 +1,13 @@
-from app import db, tmdb
+import sys
+
+from app import db, tmdb, app
 from datetime import datetime, timedelta
 import sqlalchemy.types as types
 import errno
 import json
 import os
+import multiprocessing
+import signal
 
 
 class JsonType(types.TypeDecorator):
@@ -103,6 +107,7 @@ class Settings(db.Model, CRUD):
 class Job(db.Model, CRUD):
     __tablename__ = 'job_queue'
     id = db.Column(db.Integer, primary_key=True)
+    pid = db.Column(db.Integer, index=True)
     key = db.Column(db.String(255), index=True)
     name = db.Column(db.String(255))
     description = db.Column(db.String(1000))
@@ -113,25 +118,52 @@ class Job(db.Model, CRUD):
     lock_data = db.Column(db.String(255), index=True)
     running = db.Column(db.Boolean, index=True, default=False)
     errors = db.Column(db.Boolean, index=True, default=False)
+    proc = None
 
     def start(self):
+        if self.id is None:
+            self.save()
         self.status = 'Started'
         self.create_lock_file()
         self.start_date = datetime.utcnow()
+        self.running = True
         Log.info('Job started: %s (%i)' % (self.name, self.id))
         self.save()
 
+    def execute(self, target, args=(), kwargs={}, timeout=None):
+        self.proc = multiprocessing.Process(target=target, args=args, kwargs=kwargs)
+        self.proc.start()
+        self.pid = self.proc.pid
+        self.save()
+        self.proc.join(timeout)
+
     def stop(self):
+        if self.id is None:
+            self.save()
         self.status = 'Finished'
         self.remove_lock_file()
         self.stop_date = datetime.utcnow()
+        self.running = False
         Log.info('Job completed: %s (%i)' % (self.name, self.id))
         self.save()
 
     def abort(self, reason=''):
+        if self.id is None:
+            self.save()
+        if self.proc:
+            self.proc.terminate()
+        elif self.pid:
+            os.kill(self.pid, signal.SIGTERM)
+            pid, stat = os.waitpid(self.pid, os.WNOHANG)
+            if pid == 0:
+                os.kill(self.pid, signal.SIGKILL)
+                pid, stat = os.waitpid(self.pid, os.WNOHANG)
+                if pid == 0:
+                    Log.error('Unable to kill job: %s (%i) with pid: %i' % (self.name, self.id, self.pid), reason)
         self.status = 'Aborted'
         self.remove_lock_file()
         self.stop_date = datetime.utcnow()
+        self.running = False
         Log.warning('Job aborted: %s (%i)' % (self.name, self.id), reason)
         self.save()
 
@@ -154,6 +186,8 @@ class Job(db.Model, CRUD):
             self.log_error('Unable to create lock file for job %s (%i)' % (self.name, self.id),
                            'The lock file already exists (%s)' % self.lock_file)
             return False
+
+        data = '%i:%s:%s:%s' % (self.id if self.id is not None else 0, self.key, self.lock_file, data)
 
         try:
             with open(self.lock_file, 'w') as f:
@@ -212,22 +246,34 @@ class Log(db.Model, CRUD):
 
     @property
     def severity_str(self):
-        if self.severity == 1:
+        return self.severity_to_str(self.severity)
+
+    @staticmethod
+    def severity_to_str(severity):
+        if severity == 1:
             return 'Info'
-        if self.severity == 2:
+        if severity == 2:
             return 'Warning'
-        if self.severity == 3:
+        if severity == 3:
             return 'Error'
-        if self.severity == 4:
+        if severity == 4:
             return 'Critical'
-        if self.severity == 5:
+        if severity == 5:
             return 'Fatal'
         return 'Debug'
 
-
     @classmethod
     def add(cls, name, description='', category='default', severity=0):
-        cls(date=datetime.utcnow(), category=category, name=name, description=description, severity=severity).save()
+        if not app.config['CLI_MODE']:
+            cls(date=datetime.utcnow(), category=category, name=name, description=description, severity=severity).save()
+            return
+        msg = ' %s %s (%s)' % (('[%s]' % cls.severity_to_str(severity)).ljust(10), name, category)
+        if len(description) > 0:
+            msg += os.linesep + description.rjust(12)
+        if severity > 2:
+            print(msg, file=sys.stderr)
+        else:
+            print(msg)
 
     @classmethod
     def debug(cls, name, description='', category='default'):
@@ -385,6 +431,10 @@ class Movie(db.Model, Media, CRUD):
             self.poster = data['poster_path']
 
     @property
+    def has_files(self):
+        return MovieFile.query.filter_by(media_id=self.id).count() > 0
+
+    @property
     def recent(self):
         return self.recent_files(days=30)
 
@@ -397,6 +447,9 @@ class Movie(db.Model, Media, CRUD):
         difference = datetime.utcnow() - timedelta(days=days, weeks=weeks)
         file_ids = db.session.query(MovieFile.media_id).filter(MovieFile.added > difference)
         return Movie.query.filter(Movie.id.in_(file_ids)).all()
+
+    def add_file(self, path):
+        MovieFile(self.id, path).save()
 
 
 class TV(db.Model, CRUD, Media):

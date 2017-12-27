@@ -9,6 +9,9 @@
         <button class="icon sort grid" data-swap="watch" data-tooltip="toggle" data-placement="auto top" title="Grid View" {% if is_grid %}style="display: none"{% endif %}>
             <span class="glyphicon glyphicon-th" aria-hidden="true"></span>
         </button>
+        <button class="icon refresh notify {% if refreshing %} spin {% endif %}" data-tooltip="toggle" data-placement="auto top" {% if refreshing %}data-alt-{% endif %}title="Refresh library" {% if not refreshing %}data-alt-{% endif %}title="Refreshing library">
+            <span class="glyphicon glyphicon-refresh" aria-hidden="true"></span>
+        </button>
     </div>
     <h6>All Movies</h6>
     {%- if movies|length > 0 %}

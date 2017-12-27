@@ -530,7 +530,8 @@ table.log-list > tbody > tr.log-data.open div {
 }
 
 .media .media-actions button.refresh.spin span,
-.overview-actions button.refresh.spin span {
+.overview-actions button.refresh.spin span,
+.movies .sort-actions button.refresh.spin span {
     -webkit-animation-name: refreshSpin;
     -webkit-animation-duration: 2.5s;
     -webkit-animation-iteration-count: infinite;

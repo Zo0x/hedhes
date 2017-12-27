@@ -47,26 +47,27 @@ jQuery(function () {
     function swapTitle(element)
     {
         var el = jQuery(element);
-        el.addClass('spin').addClass('active');
         var tool = el.attr('title');
         el.attr('title', el.data('alt-title'));
         el.data('alt-title', tool);
         el.tooltip('fixTitle');
     }
     jQuery('.media.view .media-actions .icon.refresh').click(function(){
-        if (jQuery(this).hasClass('spin'))
+        spinner = jQuery(this);
+        if (spinner.hasClass('spin'))
             return;
-        var type = jQuery('.media.view').data('media-type');
-        jQuery.ajax({url: '/' + type + '/refresh/' + jQuery('.media.view').data('tmdbid'), context: this,
+        var view = spinner.closest('.media.view');
+        var type = view.data('media-type');
+        jQuery.ajax({url: '/' + type + '/refresh/' + view.data('tmdbid'), context: this,
         success: function(result){
             if (result.result)
             {
-                jQuery(this).addClass('spin').addClass('notify');
-                swapTitle(jQuery(this));
+                spinner.addClass('spin notify');
+                swapTitle(spinner);
                 var checkTimer = setTimeout(checkFunction, 1000);
                 function checkFunction()
                 {
-                    jQuery.ajax({url: '/' + type + '/refresh_status/' + jQuery('.media.view').data('tmdbid'), context: this,
+                    jQuery.ajax({url: '/' + type + '/refresh_status/' + view.data('tmdbid'), context: this,
                     success: function(result){
                         if (result.result)
                         {
@@ -74,7 +75,7 @@ jQuery(function () {
                         }
                         else
                         {
-                            jQuery(this).removeClass('spin').removeClass('notify');
+                            spinner.removeClass('spin notify');
                             swapTitle(jQuery(this));
                             clearTimeout(checkTimer);
                         }
@@ -92,11 +93,12 @@ jQuery(function () {
         }});
     });
     jQuery('.media.view .media-actions .icon.add').click(function(){
-        var type = jQuery('.media.view').data('media-type');
+        var view = jQuery(this).closest('.media.view');
+        var type = view.data('media-type');
         var refresh = jQuery('.media.view .media-actions .icon.refresh');
         refresh.addClass('spin').addClass('active').attr('title', 'Adding to local library').tooltip('fixTitle');
         jQuery(this).removeClass('active');
-        jQuery.ajax({url: '/' + type + '/add/' + jQuery('.media.view').data('tmdbid'), context: this,
+        jQuery.ajax({url: '/' + type + '/add/' + view.data('tmdbid'), context: this,
         success: function(result){
             if (result.result)
             {
@@ -120,9 +122,7 @@ jQuery(function () {
         event.stopPropagation();
     });
     jQuery(window).click(function() {
-        var div = jQuery('.media.view .media-settings .slider');
-        if (div.hasClass('opened'))
-            div.removeClass('opened');
+        jQuery('.media.view .media-settings .slider').removeClass('opened');
     });
     jQuery('.media.view .media-settings .slider').click(function(event){
         event.stopPropagation();
@@ -131,10 +131,11 @@ jQuery(function () {
         jQuery('.media.view .media-settings .slider').removeClass('opened');
     });
     jQuery('#confirm-delete .btn-ok').click(function(e) {
-        var type = jQuery('.media.view').data('media-type');
+        var view = jQuery('.media.view');
+        var type = view.data('media-type');
         var modalDiv = jQuery(e.delegateTarget);
         modalDiv.addClass('loading');
-        jQuery.ajax({url: '/' + type + '/remove/' + jQuery('.media.view').data('tmdbid'), context: this,
+        jQuery.ajax({url: '/' + type + '/remove/' + view.data('tmdbid'), context: this,
         success: function(result){
             if (result.result)
             {
@@ -166,25 +167,20 @@ jQuery(function () {
     jQuery('.log-list .log-item').click(function() {
         var div = jQuery(this).next('.log-data');
         if (div.hasClass('open'))
-        {
-            div.removeClass('open');
-            div.addClass('closed');
-        }
+            div.removeClass('open').addClass('closed');
         else
-        {
-            div.removeClass('closed');
-            div.addClass('open');
-        }
+            div.removeClass('closed').addClass('open');
     });
     jQuery('.overview-actions .icon.refresh').click(function(){
-        if (jQuery(this).hasClass('spin'))
+        spinner = jQuery(this);
+        if (spinner.hasClass('spin'))
             return;
         jQuery.ajax({url: '/refresh', context: this,
         success: function(result){
             if (result.result)
             {
-                jQuery(this).addClass('spin').addClass('notify');
-                swapTitle(jQuery(this));
+                spinner.addClass('spin notify');
+                swapTitle(spinner);
                 var checkTimer = setTimeout(checkFunction, 1000);
                 function checkFunction()
                 {
@@ -196,8 +192,8 @@ jQuery(function () {
                         }
                         else
                         {
-                            jQuery(this).removeClass('spin').removeClass('notify');
-                            swapTitle(jQuery(this));
+                            spinner.removeClass('spin notify');
+                            swapTitle(spinner);
                             clearTimeout(checkTimer);
                         }
                     }, error: function(result){
@@ -211,6 +207,45 @@ jQuery(function () {
             }
         }, error: function(result){
                 alert('Unable to refresh library');
+        }});
+    });
+    jQuery('.sort-actions .icon.refresh').click(function(){
+        spinner = jQuery(this);
+        if (spinner.hasClass('spin'))
+            return;
+        var type = spinner.closest('.sort-actions').data('media-type');
+        jQuery.ajax({url: '/' + type + '/refresh', context: this,
+        success: function(result){
+            if (result.result)
+            {
+                spinner.addClass('spin notify');
+                swapTitle(spinner);
+                var checkTimer = setTimeout(checkFunction, 1000);
+                function checkFunction()
+                {
+                    jQuery.ajax({url: '/' + type + '/refresh_status', context: this,
+                    success: function(result){
+                        if (result.result)
+                        {
+                            checkTimer = setTimeout(checkFunction, 1000);
+                        }
+                        else
+                        {
+                            spinner.removeClass('spin notify');
+                            swapTitle(jQuery(this));
+                            clearTimeout(checkTimer);
+                        }
+                    }, error: function(result){
+                            checkTimer = setTimeout(checkFunction, 1000);
+                    }});
+                }
+            }
+            else
+            {
+                alert('Unable to refresh ' + type + ' library: ' + result.data);
+            }
+        }, error: function(result){
+                alert('Unable to refresh ' + type + ' library: ' + result.data);
         }});
     });
 });

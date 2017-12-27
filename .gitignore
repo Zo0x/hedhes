@@ -101,8 +101,8 @@ ENV/
 .mypy_cache/
 
 # custom
-MediaManagerEnv/
-db_repository/
+MediaManagerEnv/*
+db_repository/*
 app.db
-.idea/
-tmp/
+.idea
+tmp/*

@@ -8,6 +8,9 @@ SQLALCHEMY_TRACK_MODIFICATIONS = False
 WTF_CSRF_ENABLED = True
 SECRET_KEY = os.urandom(24)
 
+ASYNC_ENABLED = True
+CLI_MODE = False
+
 # Borrowed this from sickrage - thanks clinton!
 TMDB_API_KEY = 'edc5f123313769de83a71e157758030b'
 

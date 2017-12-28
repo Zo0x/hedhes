@@ -253,11 +253,11 @@ class Log(db.Model, CRUD):
         if severity == 1:
             return 'Info'
         if severity == 2:
-            return 'Warning'
+            return 'Warn'
         if severity == 3:
             return 'Error'
         if severity == 4:
-            return 'Critical'
+            return 'Crit'
         if severity == 5:
             return 'Fatal'
         return 'Debug'
@@ -267,9 +267,9 @@ class Log(db.Model, CRUD):
         if not app.config['CLI_MODE']:
             cls(date=datetime.utcnow(), category=category, name=name, description=description, severity=severity).save()
             return
-        msg = ' %s %s (%s)' % (('[%s]' % cls.severity_to_str(severity)).ljust(10), name, category)
+        msg = ' %s %s (%s)' % (('[%s]' % cls.severity_to_str(severity)).ljust(7), name, category)
         if len(description) > 0:
-            msg += os.linesep + description.rjust(12)
+            msg += os.linesep + (' ' * 9) + (os.linesep + (' ' * 9)).join(description.splitlines())
         if severity > 2:
             print(msg, file=sys.stderr)
         else:
@@ -384,7 +384,6 @@ class Movie(db.Model, Media, CRUD):
     offline = db.Column(db.Boolean)
     watching = db.Column(db.Boolean)
     in_library = db.Column(db.Boolean)
-    has_files = db.Column(db.Boolean)
     added = db.Column(db.DateTime, index=True)
     search_quality = db.Column(JsonType(255), index=True)
 
@@ -414,7 +413,6 @@ class Movie(db.Model, Media, CRUD):
         self.offline = False
         self.watching = False
         self.in_library = False
-        self.has_files = False
         self.search_quality = Settings.get('default_search_quality')
 
         if data['release_date'] != '':

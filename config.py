@@ -41,6 +41,18 @@ DEFAULT_SETTINGS = [
         'type': 'bool'
     },
     {
+        'key': 'symlink_files',
+        'value': True,
+        'name': 'Symlink old media files (overrides hardlink, defaults to move)',
+        'type': 'bool'
+    },
+    {
+        'key': 'hardlink_files',
+        'value': False,
+        'name': 'Hardlink old media files (defaults to symlink)',
+        'type': 'bool'
+    },
+    {
         'key': 'movie_media_path',
         'value': '/media/Movies',
         'name': 'Movie Media Path',

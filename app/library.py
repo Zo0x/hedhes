@@ -163,9 +163,10 @@ class Library:
 
         for path in media_files:
             ptn_data = ptn.parse(path.name)
-            newdir = self.__generate_movie_folder_from_ptn(ptn_data)
             newfile = self.__generate_movie_file_from_ptn(ptn_data) + path.suffix
-            newpath = os.path.join(mpath, newdir, newfile)
+            newdir = os.path.join(mpath, self.__generate_movie_folder_from_ptn(ptn_data))
+            newpath = os.path.join(newdir, newfile)
+            oldpath = str(path)
 
             if 'year' in ptn_data:
                 movies = tmdb.search_movie(ptn_data['title'], ptn_data['year'])
@@ -184,9 +185,32 @@ class Library:
                 movie = Movie(data)
 
             if movie.has_files:
-                Log.error('Movie %s already has files in the library' % movies[0]['id'], 'Ignorning local file: %s' % str(path))
+                Log.error('Movie %s already has files in the library' % movies[0]['id'],
+                          'Ignoring download file: %s' % oldpath)
+            elif os.path.isfile(newpath):
+                Log.warning('Destination file for movie %s already exists' % movies[0]['id'],
+                            'Ignoring download file: %s\nAdding media file:%s' % (oldpath, newpath))
+                movie.add_file(newpath)
             else:
                 # TODO: Move the file to the newpath first then add this
+                Log.info('Creating directory', newdir)
+                os.makedirs(newdir, exist_ok=True)
+                Log.info('Moving media file', 'Src: %s\nDst: %s' % (oldpath, newpath))
+                os.rename(oldpath, newpath)
+                if app.config['symlink_files']:
+                    try:
+                        os.symlink(newpath, oldpath)
+                    except OSError as e:
+                        Log.error('Error creating symlink', 'Src: %s\nDst: %s\n%s' % (oldpath, newpath, e.strerror))
+                elif app.config['hardlink_files']:
+                    try:
+                        os.link(newpath, oldpath)
+                    except OSError as e:
+                        Log.error('Error creating hardlink', 'Src: %s\nDst: %s\n%s' % (oldpath, newpath, e.strerror))
+                        try:
+                            os.symlink(newpath, oldpath)
+                        except OSError as e:
+                            Log.error('Error creating symlink', 'Src: %s\nDst: %s\n%s' % (oldpath, newpath, e.strerror))
                 movie.add_file(newpath)
         pass
 

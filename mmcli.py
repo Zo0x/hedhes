@@ -26,6 +26,12 @@ refresh_parser.add_argument('-i', '--id', help='The ID of the library element to
 
 args = parser.parse_args()
 
+# Debug only - reset the temporary data tree before changing it
+import shutil, os
+shutil.rmtree('./tmp')
+shutil.copytree('./tmp.bak', './tmp')
+
+
 if args.action == 'refresh':
     if args.all or args.update:
         if args.type == 'all':
